@@ -1,9 +1,28 @@
 import telebot
 from telebot import types
+import sqlite3 as sql
+
+
+
+
+
 TOKEN = '5970535905:AAGWQb0JXkEs9FDjPAjRgkz0xJ1RKF56bvA'
 bot = telebot.TeleBot(TOKEN)
-user_firstname = None
 
+## Доработать
+def add_user(name):
+    database = sql.connect('users.sqlite')
+    cursor = database.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT,
+                        firstname TEXT,
+                        lastname TEXT
+                   )''')
+    cursor.execute(f"INSERT INTO users (username) VALUES ({name})")
+    database.commit()
+
+## Доработать
 
 @bot.message_handler(commands=['help'])
 def send_help(message):
@@ -17,8 +36,6 @@ def send_help(message):
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    global user_firstname
-    user_firstname = message.from_user.first_name
     welcome_message = "Здравствуйте! Я бот помощник онлайн-школы английского Deshar School.\n" \
                       "Что вас интересует?"
     markup = types.InlineKeyboardMarkup()
@@ -35,7 +52,7 @@ def send_welcome(message):
 def about_usBtn(call):
     if call.message:
         if call.data == 'about_us':
-            text = f'''Привет, {user_firstname}, мы школа английского Deshar School!
+            text = f'''Привет, {call.message.chat.first_name}, мы школа английского Deshar School!
 Работаем уже 7 лет, наши преподаватели 15 лет говорят по-английски, аттестованы Кембриджем. Профессиональные переводчики.
 Наши ученики в течении 4 месяцев уже свободно владеют языком'''
             markup = types.InlineKeyboardMarkup()
@@ -43,9 +60,27 @@ def about_usBtn(call):
             markup.add(button1)
             bot.send_message(call.message.chat.id, text, reply_markup=markup)
         elif call.data == 'sign_up_for_lesson':
-            bot.send_message(call.message.chat.id, 'Вы записаны на урок')
+            user_name = call.message.chat.username
+            add_user(user_name)
+            bot.send_message(call.message.chat.id, f"{call.message.chat.first_name}, Вы записаны на урок!")
         elif call.data == 'show_course':
-            bot.send_message(call.message.chat.id, 'Доработать')
+            # Отправляем 10 кнопок
+            markup = types.InlineKeyboardMarkup()
+            button_1 = types.InlineKeyboardButton(f'Кнопка 1', callback_data=f'button_1')
+            button_2 = types.InlineKeyboardButton(f'Кнопка 2', callback_data=f'button_2')
+            button_3 = types.InlineKeyboardButton(f'Кнопка 3', callback_data=f'button_3')
+            button_4 = types.InlineKeyboardButton(f'Кнопка 4', callback_data=f'button_4')
+            button_5 = types.InlineKeyboardButton(f'Кнопка 5', callback_data=f'button_5')
+            button_6 = types.InlineKeyboardButton(f'Кнопка 6', callback_data=f'button_6')
+            button_7 = types.InlineKeyboardButton(f'Кнопка 7', callback_data=f'button_7')
+            button_8 = types.InlineKeyboardButton(f'Кнопка 8', callback_data=f'button_8')
+            button_9 = types.InlineKeyboardButton(f'Кнопка 9', callback_data=f'button_9')
+            button_10 = types.InlineKeyboardButton(f'Кнопка 10', callback_data=f'button_10')
+            markup.add(button_1, button_2, button_3, button_4, button_5, button_6, button_7, button_8, button_9, button_10)
+            bot.send_message(call.message.chat.id, 'Вот 10 кнопок:', reply_markup=markup)
+        elif call.data.startswith('button_'):
+            button_number = int(call.data.split('_')[1])
+            bot.send_message(call.message.chat.id, f'Вы нажали кнопку {button_number}')
         elif call.data == 'learn_words':
             pass
         elif call.data == 'english_texts':
@@ -59,3 +94,4 @@ def send_stop(message):
 
 
 bot.polling()
+
